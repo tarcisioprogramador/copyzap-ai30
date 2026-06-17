@@ -1,0 +1,172 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: copies
+    description: Copy generation operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /copies:
+    get:
+      operationId: listCopies
+      tags: [copies]
+      summary: List generated copies
+      description: Returns all previously generated copies
+      responses:
+        "200":
+          description: List of copies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Copy"
+    post:
+      operationId: generateCopy
+      tags: [copies]
+      summary: Generate a copy with AI
+      description: Uses AI to generate a WhatsApp sales message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CopyInput"
+      responses:
+        "201":
+          description: Generated copy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Copy"
+
+  /copies/{id}:
+    delete:
+      operationId: deleteCopy
+      tags: [copies]
+      summary: Delete a copy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /copies/stats:
+    get:
+      operationId: getCopyStats
+      tags: [copies]
+      summary: Get copy statistics
+      description: Returns counts per message type and recent activity
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CopyStats"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Copy:
+      type: object
+      required:
+        - id
+        - clientName
+        - product
+        - messageType
+        - generatedText
+        - createdAt
+      properties:
+        id:
+          type: integer
+        clientName:
+          type: string
+        product:
+          type: string
+        value:
+          type: ["string", "null"]
+        context:
+          type: ["string", "null"]
+        messageType:
+          type: string
+          enum: [venda, followup, urgencia, posVenda, objecao]
+        tone:
+          type: string
+          enum: [profissional, amigavel, direto, emocional]
+        generatedText:
+          type: string
+        createdAt:
+          type: string
+
+    CopyInput:
+      type: object
+      required:
+        - clientName
+        - product
+        - messageType
+      properties:
+        clientName:
+          type: string
+          minLength: 1
+        product:
+          type: string
+          minLength: 1
+        value:
+          type: string
+        context:
+          type: string
+        messageType:
+          type: string
+          enum: [venda, followup, urgencia, posVenda, objecao]
+        tone:
+          type: string
+          enum: [profissional, amigavel, direto, emocional]
+
+    CopyStats:
+      type: object
+      required:
+        - total
+        - byType
+        - todayCount
+      properties:
+        total:
+          type: integer
+        byType:
+          type: object
+          additionalProperties:
+            type: integer
+        todayCount:
+          type: integer
